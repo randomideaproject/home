@@ -1,4 +1,5 @@
 {
+  "cleanUrls": true,
   "redirects": [
     { "source": "/moth-watch", "destination": "/moth-watch/", "permanent": false }
   ],
