@@ -1,0 +1,14 @@
+{
+  "name": "Moth Watch",
+  "short_name": "Moth Watch",
+  "description": "Moth sighting leaderboard for Clifton and Gilpin residents.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f1530",
+  "theme_color": "#c6c2b6",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

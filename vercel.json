@@ -1,9 +1,27 @@
 {
-  "redirects": [
-    { "source": "/moth-watch", "destination": "/moth-watch/", "permanent": false }
+  "headers": [
+    {
+      "source": "/audio/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/(admin|admin.html)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
   ],
-  "rewrites": [
-    { "source": "/moth-watch/", "destination": "https://moth-watch.vercel.app/app" },
-    { "source": "/moth-watch/:path*", "destination": "https://moth-watch.vercel.app/:path*" }
-  ]
+  "cleanUrls": true
 }

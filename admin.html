@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Moth Watch Admin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&display=swap">
+<style>
+:root {
+  --desk: #2f6f73; --desk-dot: #285e62;
+  --chrome: #c6c2b6; --chrome-hi: #f2efe6; --chrome-lo: #807a6c; --chrome-dk: #3a362e;
+  --title: #6e1d1d; --title-2: #a3271b;
+  --ink: #1b1a17; --ink-soft: #4a463d; --well: #e9e6dc;
+  --amber: #ffcc3d; --bad: #a3271b; --good: #2d6b28;
+  --pixel: "Silkscreen", "Courier New", monospace;
+  --terminal: "VT323", "Courier New", monospace;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background-color: var(--desk);
+  background-image: radial-gradient(var(--desk-dot) 1px, transparent 1px); background-size: 4px 4px;
+  color: var(--ink); font-family: var(--terminal); font-size: 20px; line-height: 1.2; min-height: 100vh;
+  display: grid; place-items: start center;
+  padding-block: 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+button, input { font: inherit; color: inherit; }
+.raised { background: var(--chrome); border: 2px solid; border-color: var(--chrome-hi) var(--chrome-dk) var(--chrome-dk) var(--chrome-hi); box-shadow: inset -1px -1px 0 var(--chrome-lo), inset 1px 1px 0 #fff; }
+.sunken { background: var(--well); border: 2px solid; border-color: var(--chrome-lo) var(--chrome-hi) var(--chrome-hi) var(--chrome-lo); box-shadow: inset 1px 1px 0 var(--chrome-dk); }
+.win { width: min(440px, 100%); }
+.win > header { display: flex; align-items: center; gap: 8px; background: linear-gradient(90deg, var(--title), var(--title-2)); color: #fff; padding: 3px 6px; margin: 2px 2px 0; }
+.win h1 { margin: 0; font-family: var(--pixel); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+.body { padding: 12px; display: grid; gap: 10px; }
+.lbl { font-family: var(--pixel); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
+input[type="password"], input[type="text"] { width: 100%; padding: 2px 6px; font-size: 22px; background: #fff; border: 2px solid; border-color: var(--chrome-lo) var(--chrome-hi) var(--chrome-hi) var(--chrome-lo); border-radius: 0; }
+input:focus-visible, .btn:focus-visible { outline: 2px dotted var(--title); outline-offset: 2px; }
+.btn { font-family: var(--pixel); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; padding: 8px 12px; cursor: pointer; }
+.btn:active { border-color: var(--chrome-dk) var(--chrome-hi) var(--chrome-hi) var(--chrome-dk); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.danger { background: var(--bad); color: #fff; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; padding: 6px; }
+.stats b { display: block; font-size: 32px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.stats span { font-size: 16px; color: var(--ink-soft); }
+.opt { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; align-items: start; padding: 6px; cursor: pointer; }
+.opt input { margin-top: 5px; accent-color: var(--title); }
+.opt small { grid-column: 2; color: var(--ink-soft); font-size: 17px; }
+.msg { margin: 0; font-size: 18px; }
+.msg.err { color: var(--bad); } .msg.ok { color: var(--good); }
+a { color: var(--title); }
+.bugs { margin-top: 16px; }
+.bugs .hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.bugs .hd .btn { padding: 4px 8px; }
+.bugitem { padding: 8px; display: grid; gap: 4px; }
+.bugitem .meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font-size: 17px; color: var(--ink-soft); }
+.bugitem p { margin: 0; font-size: 22px; overflow-wrap: anywhere; }
+.bugitem .dev { font-size: 15px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.bugitem .btn { justify-self: start; padding: 4px 8px; }
+.bugs .win-wide { width: min(440px, 100%); }
+.resid { margin-top: 16px; }
+.resid .hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.resid .hd .btn { padding: 4px 8px; }
+.ritem { padding: 6px 8px; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; }
+.ritem b { font-weight: 400; font-size: 22px; overflow-wrap: anywhere; }
+.ritem small { grid-column: 1; font-size: 17px; color: var(--ink-soft); }
+.ritem .btn { grid-column: 2; grid-row: 1 / span 2; padding: 4px 8px; }
+.devrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+</style>
+</head>
+<body>
+<section class="win raised" aria-labelledby="h">
+  <header><h1 id="h">Moth Watch · Admin</h1></header>
+
+  <form class="body" id="login" novalidate>
+    <label class="lbl" for="pin">Admin PIN or passphrase</label>
+    <input type="password" id="pin" autocomplete="current-password" autocapitalize="off" spellcheck="false" required>
+    <p class="msg" style="color:var(--ink-soft);font-size:17px">3 wrong tries locks this page for 10 minutes.</p>
+    <p class="msg err" id="login-msg" hidden></p>
+    <button class="btn raised" id="unlock">Unlock</button>
+  </form>
+
+  <form class="body" id="panel" hidden novalidate>
+    <div class="stats sunken" aria-live="polite">
+      <div><b id="c-moths">–</b><span>moths</span></div>
+      <div><b id="c-sight">–</b><span>sightings</span></div>
+      <div><b id="c-res">–</b><span>residents</span></div>
+    </div>
+    <span class="lbl" id="what">What to reset</span>
+    <div role="radiogroup" aria-labelledby="what" style="display:grid;gap:4px">
+      <label class="opt sunken"><input type="radio" name="scope" value="sightings" id="s-sight">Moth counts only
+        <small>Every sighting is deleted and all scores go to zero. Residents keep their usernames and homes.</small></label>
+      <label class="opt sunken"><input type="radio" name="scope" value="all" id="s-all">Everything
+        <small>Deletes all sightings and all residents. Everyone has to move in again.</small></label>
+    </div>
+    <label class="lbl" for="confirm">Type RESET to confirm</label>
+    <input type="text" id="confirm" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <p class="msg" id="panel-msg" hidden></p>
+    <button class="btn danger raised" id="go" disabled>Reset</button>
+    <p class="msg" style="color:var(--ink-soft)">This can't be undone. <a href="./">Back to the leaderboard</a></p>
+  </form>
+</section>
+
+<section class="win raised resid" id="resid" aria-labelledby="rh" hidden>
+  <header><h1 id="rh">Residents</h1></header>
+  <div class="body">
+    <div class="hd"><span class="lbl" id="res-total" aria-live="polite">Loading…</span><button class="btn raised" type="button" id="res-refresh">Refresh</button></div>
+    <p class="msg" id="res-msg" hidden></p>
+    <div id="res-list" style="display:grid;gap:8px"></div>
+    <p class="msg" style="color:var(--ink-soft)">Removing a resident also deletes all of their moth logs. This can't be undone.</p>
+  </div>
+</section>
+
+<section class="win raised resid" id="dev" aria-labelledby="dh" hidden>
+  <header><h1 id="dh">Dev mode</h1></header>
+  <div class="body">
+    <div class="devrow"><span id="dev-state">Off</span><button class="btn raised" type="button" id="dev-toggle" role="switch" aria-checked="false">Turn on</button></div>
+    <p class="msg" style="color:var(--ink-soft)">Shows the CITY PREVIEW panel on the Moth Watch page, in this browser only. Nobody else sees it.</p>
+  </div>
+</section>
+
+<section class="win raised bugs" id="bugs" aria-labelledby="bh" hidden>
+  <header><h1 id="bh">Bug reports</h1></header>
+  <div class="body">
+    <div class="hd"><span class="lbl" id="bug-total" aria-live="polite">Loading…</span><button class="btn raised" type="button" id="bug-refresh">Refresh</button></div>
+    <p class="msg err" id="bug-msg" hidden></p>
+    <div id="bug-list" style="display:grid;gap:8px"></div>
+  </div>
+</section>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  let pin = ""; // kept in memory only
+
+  async function call(body) {
+    let r;
+    try {
+      r = await fetch("api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pin, ...body }) });
+    } catch {
+      throw new Error(location.protocol === "file:" ? "The admin page only works on the deployed site, not opened as a file." : "Can't reach the Moth Watch server. Check that Deployment Protection is off in Vercel.");
+    }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw Object.assign(new Error(j.error || `Something went wrong (${r.status}).`), { status: r.status });
+    return j;
+  }
+  function show(el, text, kind) { el.textContent = text; el.className = "msg " + (kind || ""); el.hidden = false; }
+  function counts(c) { $("c-moths").textContent = c.moths; $("c-sight").textContent = c.sightings; $("c-res").textContent = c.residents; }
+
+  $("login").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    pin = $("pin").value; $("unlock").disabled = true; $("login-msg").hidden = true;
+    try {
+      counts(await call({ action: "check" }));
+      $("login").hidden = true; $("panel").hidden = false; $("s-sight").focus();
+      loadResidents(); loadBugs(); devInit();
+    } catch (x) { show($("login-msg"), x.message, "err"); pin = ""; }
+    $("unlock").disabled = false;
+  });
+
+  // ---- dev mode: shows the CITY PREVIEW panel in this browser ----
+  function devInit() {
+    $("dev").hidden = false;
+    let on = false; try { on = localStorage.getItem("mw.dev") === "1"; } catch {}
+    const paint = () => { $("dev-state").textContent = on ? "On" : "Off"; $("dev-toggle").textContent = on ? "Turn off" : "Turn on"; $("dev-toggle").setAttribute("aria-checked", String(on)); };
+    paint();
+    $("dev-toggle").onclick = () => { on = !on; try { if (on) localStorage.setItem("mw.dev", "1"); else localStorage.removeItem("mw.dev"); } catch { show($("res-msg"), "This browser won't save the setting (private window?).", "err"); } paint(); };
+  }
+
+  // ---- residents: remove one ----
+  const tName = (t) => (t === "gilpin" ? "Gilpin" : "Clifton");
+  const lvl = (f) => (f === 0 ? "Ground" : "Level " + f);
+  function drawResidents(list) {
+    $("resid").hidden = false;
+    $("res-total").textContent = list.length ? `${list.length} resident${list.length === 1 ? "" : "s"}` : "No residents yet";
+    const box = $("res-list"); box.textContent = "";
+    for (const r of list) {
+      const item = document.createElement("div"); item.className = "ritem sunken";
+      const nm = document.createElement("b"); nm.textContent = r.name;
+      const sm = document.createElement("small"); sm.textContent = `${tName(r.tower)} · ${lvl(r.floor)} · ${r.moths} moth${r.moths === 1 ? "" : "s"}${r.lightOff ? " · light off" : ""}`;
+      const del = document.createElement("button"); del.type = "button"; del.className = "btn raised"; del.textContent = "Remove";
+      let armed = 0;
+      del.addEventListener("click", async () => {
+        if (!armed) { armed = setTimeout(() => { armed = 0; del.textContent = "Remove"; del.classList.remove("danger"); }, 4000); del.textContent = "Sure?"; del.classList.add("danger"); return; }
+        clearTimeout(armed); del.disabled = true;
+        try { const j = await call({ action: "resident-delete", key: r.key }); counts(j.counts); drawResidents(j.residents); show($("res-msg"), `Removed ${r.name} and their moths.`, "ok"); }
+        catch (x) { show($("res-msg"), x.message, "err"); del.disabled = false; armed = 0; del.textContent = "Remove"; del.classList.remove("danger"); }
+      });
+      item.append(nm, sm, del); box.append(item);
+    }
+  }
+  async function loadResidents() {
+    $("res-msg").hidden = true;
+    try { drawResidents((await call({ action: "residents" })).residents); } catch (x) { $("resid").hidden = false; show($("res-msg"), x.message, "err"); }
+  }
+  $("res-refresh").addEventListener("click", loadResidents);
+
+  // ---- bug reports sent from the About window ----
+  const when = (ts) => new Date(ts).toLocaleString([], { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+  function drawBugs(list) {
+    $("bugs").hidden = false;
+    $("bug-total").textContent = list.length ? `${list.length} report${list.length === 1 ? "" : "s"}, newest first` : "No bug reports yet";
+    const box = $("bug-list"); box.textContent = "";
+    for (const b of list) {
+      const item = document.createElement("div"); item.className = "bugitem sunken";
+      const meta = document.createElement("div"); meta.className = "meta";
+      const t = document.createElement("span"); t.textContent = when(b.ts);
+      const u = document.createElement("span"); u.textContent = b.user ? `from ${b.user}` : "not signed in";
+      meta.append(t, u);
+      const p = document.createElement("p"); p.textContent = b.text;
+      const d = document.createElement("div"); d.className = "dev"; d.textContent = b.device || "device unknown";
+      const del = document.createElement("button"); del.type = "button"; del.className = "btn raised"; del.textContent = "Delete";
+      del.addEventListener("click", async () => {
+        del.disabled = true;
+        try { drawBugs((await call({ action: "bug-delete", id: b.id })).bugs); } catch (x) { show($("bug-msg"), x.message, "err"); del.disabled = false; }
+      });
+      item.append(meta, p, d, del); box.append(item);
+    }
+  }
+  async function loadBugs() {
+    $("bug-msg").hidden = true;
+    try { drawBugs((await call({ action: "bugs" })).bugs); } catch (x) { $("bugs").hidden = false; show($("bug-msg"), x.message, "err"); }
+  }
+  $("bug-refresh").addEventListener("click", loadBugs);
+
+  const scope = () => document.querySelector('input[name="scope"]:checked')?.value;
+  const sync = () => {
+    const s = scope();
+    $("go").disabled = !s || $("confirm").value.trim() !== "RESET";
+    $("go").textContent = s === "all" ? "Reset everything" : s ? "Reset moth counts" : "Reset";
+  };
+  document.querySelectorAll('input[name="scope"]').forEach((r) => r.addEventListener("change", sync));
+  $("confirm").addEventListener("input", sync);
+
+  $("panel").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if ($("go").disabled) return;
+    $("go").disabled = true;
+    try {
+      const r = await call({ action: "reset", scope: scope(), confirm: "RESET" });
+      counts(await call({ action: "check" }));
+      loadResidents();
+      show($("panel-msg"), `Done. Removed ${r.removed} record${r.removed === 1 ? "" : "s"}.`, "ok");
+      $("confirm").value = ""; document.querySelectorAll('input[name="scope"]').forEach((x) => (x.checked = false));
+    } catch (x) {
+      if (x.status === 401 || x.status === 423) { $("panel").hidden = true; $("login").hidden = false; show($("login-msg"), x.status === 423 ? x.message : "PIN no longer accepted. Enter it again.", "err"); }
+      else show($("panel-msg"), x.message, "err");
+    }
+    sync();
+  });
+})();
+</script>
+</body>
+</html>
