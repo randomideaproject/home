@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>random idea project</title>
+<style>
+  @font-face {
+    font-family: 'Work Sans Tase Nr';
+    src: url('WorkSansTase-Nr-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --ink: #0c0c0b;
+    --paper: #f2f1ee;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+  }
+
+  body {
+    position: relative;
+    font-family: 'Helvetica Neue', 'Work Sans Tase Nr', Arial, sans-serif;
+  }
+
+  /* ---------- background layers (bottom to top) ---------- */
+
+  .noise-fallback,
+  .footage {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .noise-fallback {
+    z-index: 1;
+  }
+
+  .footage {
+    z-index: 2;
+    opacity: 0;
+    filter: grayscale(0.3) contrast(1.2) brightness(0.82) saturate(1.25);
+    transition: opacity 0.8s ease;
+  }
+
+  .footage.ready {
+    opacity: 1;
+  }
+
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.18) 0px,
+      rgba(0,0,0,0.18) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode: multiply;
+    opacity: 0.5;
+  }
+
+  .grain {
+    position: fixed;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    opacity: 0.12;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grainShift 0.4s steps(2) infinite;
+  }
+
+  @keyframes grainShift {
+    0%   { transform: translate(0, 0); }
+    50%  { transform: translate(-2%, 1%); }
+    100% { transform: translate(0, 0); }
+  }
+
+  .vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.55) 100%);
+  }
+
+  .flicker {
+    position: fixed;
+    inset: 0;
+    z-index: 6;
+    pointer-events: none;
+    background: #000;
+    opacity: 0;
+    animation: flickerTiming 6.5s infinite;
+  }
+
+  @keyframes flickerTiming {
+    0%, 96%, 100% { opacity: 0; }
+    97% { opacity: 0.08; }
+    98% { opacity: 0; }
+    98.5% { opacity: 0.05; }
+    99% { opacity: 0; }
+  }
+
+  /* ---------- frame + label (on top of everything) ---------- */
+
+  .frame {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .stage-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .label {
+    max-width: 92vw;
+  }
+
+  .mute-btn {
+    pointer-events: auto;
+    padding: 8px;
+    border: none;
+    background: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  .mute-btn:hover {
+    transform: scale(1.06);
+  }
+
+  .mute-btn svg {
+    width: 33px;
+    height: 33px;
+    color: var(--paper);
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.7)) drop-shadow(0 0 18px rgba(0,0,0,0.4));
+  }
+
+  .mute-btn .icon-off,
+  .mute-btn.muted .icon-on {
+    display: none;
+  }
+
+  .mute-btn.muted .icon-off {
+    display: block;
+  }
+
+  .wordmark {
+    background: linear-gradient(90deg, #a0a09d 0%, #a3a39d 25%, #c9c9c4 50%, #a3a39d 75%, #a0a09d 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    font-weight: 400;
+    font-size: clamp(0.675rem, 5.58vw, 1.71rem);
+    letter-spacing: 0.0144em;
+    text-align: center;
+    text-transform: lowercase;
+    line-height: 1.3;
+    white-space: nowrap;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.7)) drop-shadow(0 0 18px rgba(0,0,0,0.4));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grain { animation: none; }
+    .flicker { animation: none; opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Live placeholder texture — shows until real footage loads, and stays visible as a fallback if the video source is missing/broken -->
+  <canvas class="noise-fallback" id="noiseCanvas" aria-hidden="true"></canvas>
+
+  <!--
+    Drop your lo-fi footage in here. Keep it short (5–15s), muted-friendly,
+    and reasonably compressed — this is a full-bleed looping background,
+    not a hero video, so file size matters more than resolution.
+    Host the actual .mp4/.webm file via your CDN/object storage (e.g. Cloudflare R2,
+    Vercel Blob) rather than committing a large file to your repo.
+  -->
+  <video class="footage" id="footage" autoplay muted loop playsinline aria-hidden="true">
+    <source src="random-idea-project-bg.mp4" type="video/mp4">
+    <source src="random-idea-project-bg.webm" type="video/webm">
+  </video>
+
+  <!--
+    Drop your looping audio in here. Keep the file reasonably short and compressed
+    (an mp3 around 128–192kbps is plenty for a background loop) and make sure the
+    loop point doesn't click/pop — trim on a zero-crossing if editing it yourself.
+  -->
+  <audio id="bgAudio" loop preload="none">
+    <source src="random-idea-project-audio.mp3" type="audio/mpeg">
+  </audio>
+
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="flicker" aria-hidden="true"></div>
+
+  <div class="frame">
+    <div class="stage-content">
+      <div class="label">
+        <div class="wordmark">random idea project</div>
+      </div>
+      <button class="mute-btn muted" id="muteBtn" type="button" aria-label="Unmute audio" aria-pressed="true">
+        <svg class="icon-on" viewBox="0 0 24 24" fill="none">
+          <defs>
+            <linearGradient id="iconGradOn" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="0">
+              <stop offset="0%" stop-color="#c9c9c4"></stop>
+              <stop offset="100%" stop-color="#a5a5a1"></stop>
+            </linearGradient>
+          </defs>
+          <polygon points="3 9 3 15 8 15 13 20 13 4 8 9 3 9" fill="url(#iconGradOn)"></polygon>
+          <path d="M16.5 8.5a5 5 0 0 1 0 7" stroke="url(#iconGradOn)" stroke-width="1.8" stroke-linecap="square" fill="none"></path>
+          <path d="M19 6a9 9 0 0 1 0 12" stroke="url(#iconGradOn)" stroke-width="1.8" stroke-linecap="square" fill="none"></path>
+        </svg>
+        <svg class="icon-off" viewBox="0 0 24 24" fill="none">
+          <defs>
+            <linearGradient id="iconGradOff" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="0">
+              <stop offset="0%" stop-color="#c9c9c4"></stop>
+              <stop offset="100%" stop-color="#a5a5a1"></stop>
+            </linearGradient>
+          </defs>
+          <polygon points="3 9 3 15 8 15 13 20 13 4 8 9 3 9" fill="url(#iconGradOff)"></polygon>
+          <path d="M16.5 8.5a5 5 0 0 1 0 7" stroke="url(#iconGradOff)" stroke-width="1.8" stroke-linecap="square" fill="none"></path>
+          <path d="M19 6a9 9 0 0 1 0 12" stroke="url(#iconGradOff)" stroke-width="1.8" stroke-linecap="square" fill="none"></path>
+          <line x1="3" y1="21" x2="21" y2="3" stroke="url(#iconGradOff)" stroke-width="1.8" stroke-linecap="square"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Reveal the real video once it actually has a frame to show;
+    // until then the canvas noise underneath acts as the visible placeholder.
+    const vid = document.getElementById('footage');
+    vid.addEventListener('loadeddata', () => vid.classList.add('ready'));
+
+    // Animated static noise placeholder (stands in for your footage for now)
+    const canvas = document.getElementById('noiseCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function drawNoise() {
+      const w = canvas.width, h = canvas.height;
+      const imgData = ctx.createImageData(w, h);
+      const buffer = new Uint32Array(imgData.data.buffer);
+      for (let i = 0; i < buffer.length; i++) {
+        const shade = (Math.random() * 60) + 20; // dark grey-scale range
+        buffer[i] = (255 << 24) | (shade << 16) | (shade << 8) | shade;
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      drawNoise();
+    } else {
+      setInterval(drawNoise, 90); // low frame rate — part of the lo-fi feel
+    }
+
+    // ---------- audio: lazy-loaded, only starts on explicit button click ----------
+    // The track is large, so we deliberately do NOT preload or autoplay it —
+    // nothing is fetched until the visitor clicks the button to unmute.
+    const bgAudio = document.getElementById('bgAudio');
+    const muteBtn = document.getElementById('muteBtn');
+    const FADE_MS = 60;
+
+    let isMuted = true;
+    let audioStarted = false;
+    let fadeToken = 0; // lets a new fade cancel/override one already in progress
+
+    function updateIcon(muted) {
+      muteBtn.classList.toggle('muted', muted);
+      muteBtn.setAttribute('aria-pressed', String(muted));
+      muteBtn.setAttribute('aria-label', muted ? 'Unmute audio' : 'Mute audio');
+    }
+
+    function fadeVolume(target, duration) {
+      const token = ++fadeToken;
+      const start = bgAudio.volume;
+      const startTime = performance.now();
+
+      function step(now) {
+        if (token !== fadeToken) return; // a newer fade took over — bail out
+        const t = Math.min(1, (now - startTime) / duration);
+        bgAudio.volume = start + (target - start) * t;
+        if (t < 1) {
+          requestAnimationFrame(step);
+        }
+      }
+      requestAnimationFrame(step);
+
+      // Safety net: if requestAnimationFrame gets throttled (e.g. an unfocused
+      // tab) and never finishes the ramp, force the final value after the fact.
+      setTimeout(() => {
+        if (token === fadeToken) bgAudio.volume = target;
+      }, duration + 100);
+    }
+
+    function setMuted(muted) {
+      isMuted = muted;
+      updateIcon(muted);
+      fadeVolume(muted ? 0 : 1, FADE_MS);
+    }
+
+    bgAudio.volume = 0;
+    updateIcon(true); // starts muted/unloaded until the visitor opts in
+
+    muteBtn.addEventListener('click', () => {
+      if (!audioStarted) {
+        // First click: this is the moment the browser actually fetches the file
+        // (preload="none" plus no play() call until now means nothing has loaded yet).
+        audioStarted = true;
+        bgAudio.play().then(() => {
+          setMuted(false);
+        }).catch(err => {
+          console.warn('Could not start audio:', err);
+          audioStarted = false; // allow retry on next click
+        });
+        return;
+      }
+
+      if (bgAudio.paused) {
+        bgAudio.play().catch(err => console.warn('Could not resume audio:', err));
+      }
+      setMuted(!isMuted);
+    });
+  </script>
+
+</body>
+</html>
