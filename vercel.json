@@ -1,9 +1,1 @@
-{
-  "redirects": [
-    { "source": "/moth-watch", "destination": "/moth-watch/", "permanent": false }
-  ],
-  "rewrites": [
-    { "source": "/moth-watch/", "destination": "https://moth-watch.vercel.app/app" },
-    { "source": "/moth-watch/:path*", "destination": "https://moth-watch.vercel.app/:path*" }
-  ]
-}
+{}
